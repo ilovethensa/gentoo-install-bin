@@ -18,7 +18,7 @@ function configure_base_system() {
 		if [[ $USE_PORTAGE_TESTING == "false" ]]; then
 			echo "sys-apps/musl-locales" >> /etc/portage/package.accept_keywords/musl-locales
 		fi
-		try emerge --verbose sys-apps/musl-locales
+		try emerge --getbinpkg --getbinpkg --getbinpkg --getbinpkg --verbose  sys-apps/musl-locales
 	else
 		einfo "Generating locales"
 		echo "$LOCALES" > /etc/locale.gen \
@@ -95,7 +95,7 @@ function configure_portage() {
 
 	if [[ $SELECT_MIRRORS == "true" ]]; then
 		einfo "Temporarily installing mirrorselect"
-		try emerge --verbose --oneshot app-portage/mirrorselect
+		try emerge --getbinpkg --verbose --oneshot app-portage/mirrorselect
 
 		einfo "Selecting fastest portage mirrors"
 		mirrorselect_params=("-s" "4" "-b" "10")
@@ -204,7 +204,7 @@ function get_cmdline() {
 }
 
 function install_kernel_efi() {
-	try emerge --verbose sys-boot/efibootmgr
+	try emerge --getbinpkg --verbose sys-boot/efibootmgr
 
 	# Copy kernel to EFI
 	local kernel_file
@@ -261,7 +261,7 @@ EOF
 }
 
 function install_kernel_bios() {
-	try emerge --verbose sys-boot/syslinux
+	try emerge --getbinpkg --verbose sys-boot/syslinux
 
 	# Link kernel to known name
 	local kernel_file
@@ -307,7 +307,7 @@ function install_kernel() {
 	einfo "Installing linux-firmware"
 	echo "sys-kernel/linux-firmware linux-fw-redistributable no-source-code" >> /etc/portage/package.license \
 		|| die "Could not write to /etc/portage/package.license"
-	try emerge --verbose linux-firmware
+	try emerge --getbinpkg --verbose linux-firmware
 }
 
 function add_fstab_entry() {
@@ -369,7 +369,7 @@ function main_install_gentoo_in_chroot() {
 
 	# Install git (for git portage overlays)
 	einfo "Installing git"
-	try emerge --verbose dev-vcs/git
+	try emerge --getbinpkg --verbose dev-vcs/git
 
 	if [[ "$PORTAGE_SYNC_TYPE" == "git" ]]; then
 		mkdir_or_die 0755 "/etc/portage/repos.conf"
@@ -402,18 +402,18 @@ EOF
 
 	# Install required programs and kernel now, in order to
 	# prevent emerging module before an imminent kernel upgrade
-	try emerge --verbose sys-kernel/dracut sys-kernel/gentoo-kernel-bin app-arch/zstd
+	try emerge --getbinpkg --verbose sys-kernel/dracut sys-kernel/gentoo-kernel-bin app-arch/zstd
 
 	# Install mdadm if we used raid (needed for uuid resolving)
 	if [[ $USED_RAID == "true" ]]; then
 		einfo "Installing mdadm"
-		try emerge --verbose sys-fs/mdadm
+		try emerge --getbinpkg --verbose sys-fs/mdadm
 	fi
 
 	# Install cryptsetup if we used luks
 	if [[ $USED_LUKS == "true" ]]; then
 		einfo "Installing cryptsetup"
-		try emerge --verbose sys-fs/cryptsetup
+		try emerge --getbinpkg --verbose sys-fs/cryptsetup
 	fi
 
 	if [[ $SYSTEMD == "true" && $USED_LUKS == "true" ]] ; then
@@ -421,21 +421,21 @@ EOF
 		echo "sys-apps/systemd cryptsetup" > /etc/portage/package.use/systemd \
 			|| die "Could not write /etc/portage/package.use/systemd"
 		einfo "Rebuilding systemd with changed USE flag"
-		try emerge --verbose --changed-use --oneshot sys-apps/systemd
+		try emerge --getbinpkg --verbose --changed-use --oneshot sys-apps/systemd
 	fi
 
 	# Install btrfs-progs if we used btrfs
 	if [[ $USED_BTRFS == "true" ]]; then
 		einfo "Installing btrfs-progs"
-		try emerge --verbose sys-fs/btrfs-progs
+		try emerge --getbinpkg --verbose sys-fs/btrfs-progs
 	fi
 
-	try emerge --verbose dev-vcs/git
+	try emerge --getbinpkg --verbose dev-vcs/git
 
 	# Install zfs kernel module and tools if we used zfs
 	if [[ $USED_ZFS == "true" ]]; then
 		einfo "Installing zfs"
-		try emerge --verbose sys-fs/zfs sys-fs/zfs-kmod
+		try emerge --getbinpkg --verbose sys-fs/zfs sys-fs/zfs-kmod
 
 		einfo "Enabling zfs services"
 		if [[ $SYSTEMD == "true" ]]; then
@@ -459,7 +459,7 @@ EOF
 
 	# Install gentoolkit
 	einfo "Installing gentoolkit"
-	try emerge --verbose app-portage/gentoolkit
+	try emerge --getbinpkg --verbose app-portage/gentoolkit
 
 	if [[ $SYSTEMD == "true" ]]; then
 		if [[ $SYSTEMD_NETWORKD == "true" ]]; then
@@ -485,7 +485,7 @@ EOF
 	else
 		# Install and enable dhcpcd
 		einfo "Installing dhcpcd"
-		try emerge --verbose net-misc/dhcpcd
+		try emerge --getbinpkg --verbose net-misc/dhcpcd
 
 		enable_service dhcpcd
 	fi
@@ -498,7 +498,7 @@ EOF
 	if [[ ${#ADDITIONAL_PACKAGES[@]} -gt 0 ]]; then
 		einfo "Installing additional packages"
 		# shellcheck disable=SC2086
-		try emerge --verbose --autounmask-continue=y -- "${ADDITIONAL_PACKAGES[@]}"
+		try emerge --getbinpkg --verbose --autounmask-continue=y -- "${ADDITIONAL_PACKAGES[@]}"
 	fi
 
 	if ask "Do you want to assign a root password now?"; then
